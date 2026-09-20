@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filippo Dall'Asta — Embedded Software Engineer</title>
+<meta name="description" content="Filippo Dall'Asta — Embedded Software Engineer. Embedded Linux, firmware, BLE and hardware/software integration.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0e1a16;
+    --bg-alt: #12241d;
+    --panel-line: rgba(198,139,89,0.22);
+    --copper: #c68b59;
+    --copper-bright: #e3a874;
+    --silk: #e9e4d4;
+    --silk-dim: #8fa89a;
+    --silk-faint: #5f746a;
+    --max: 760px;
+    --pad: clamp(24px, 6vw, 64px);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 900px 500px at 15% -5%, rgba(198,139,89,0.07), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 20%, rgba(198,139,89,0.05), transparent 55%);
+    color: var(--silk);
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection{ background: var(--copper); color: var(--bg); }
+
+  a{ color: var(--copper-bright); text-decoration: none; }
+  a:hover{ text-decoration: underline; text-decoration-color: rgba(227,168,116,0.5); }
+  a:focus-visible, button:focus-visible{
+    outline: 2px solid var(--copper-bright);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .mono{ font-family: 'IBM Plex Mono', 'Courier New', monospace; }
+
+  /* ---------- Pin marker, fixed corner ---------- */
+  .pin-marker{
+    position: fixed;
+    top: 22px; left: 22px;
+    z-index: 50;
+    display:flex; align-items:center; gap:8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--silk-dim);
+    letter-spacing: 0.04em;
+    pointer-events:none;
+  }
+  .pin-marker .dot{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--copper-bright);
+    box-shadow: 0 0 8px rgba(227,168,116,0.7);
+  }
+  @media (max-width: 640px){ .pin-marker{ display:none; } }
+
+  /* ---------- Layout shell ---------- */
+  .sheet{
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 var(--pad);
+  }
+
+  section{
+    position: relative;
+    padding: 56px 0;
+    border-top: 1px solid var(--panel-line);
+  }
+  section:first-of-type{ border-top: none; }
+
+  .label-row{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom: 26px;
+  }
+  .label-row .node{
+    width:7px; height:7px;
+    background: var(--copper);
+    transform: rotate(45deg);
+    flex: none;
+  }
+  .label-row h2{
+    margin:0;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:500;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: var(--copper-bright);
+  }
+  .label-row .trace{
+    flex:1;
+    height:1px;
+    background: linear-gradient(90deg, var(--panel-line), transparent);
+  }
+
+  .measure{ max-width: var(--max); }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding: clamp(64px,14vh,120px) 0 48px;
+    border-top: none;
+  }
+  .boot{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--silk-faint);
+    margin-bottom: 28px;
+    white-space: pre-wrap;
+    min-height: 1.4em;
+  }
+  .boot .cursor{
+    display:inline-block;
+    width: 7px; height: 13px;
+    background: var(--copper-bright);
+    margin-left: 2px;
+    vertical-align: -2px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  h1{
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    line-height: 1.04;
+    margin: 0 0 10px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--silk);
+  }
+  .role{
+    font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+    color: var(--copper-bright);
+    font-weight: 500;
+    margin: 0 0 22px;
+  }
+  .tagline{
+    max-width: 58ch;
+    color: var(--silk-dim);
+    font-size: 1.05rem;
+    margin: 0 0 34px;
+  }
+
+  .contact-row{
+    display:flex; flex-wrap:wrap; gap:10px;
+  }
+  .pin{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--silk-dim);
+    padding: 8px 14px;
+    border: 1px solid var(--panel-line);
+    background: rgba(198,139,89,0.04);
+    transition: border-color .18s ease, color .18s ease, background .18s ease;
+    margin: 0;
+  }
+  .pin:hover{
+    border-color: rgba(198,139,89,0.55);
+    color: var(--silk);
+    background: rgba(198,139,89,0.09);
+    text-decoration: none;
+  }
+  .pin svg{ width:13px; height:13px; flex:none; opacity:.85; }
+
+  @media print{
+    .pin-marker, .boot .cursor{ display:none !important; }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    html, body{
+      background: var(--bg) !important;
+    }
+    .sheet{ max-width: 100%; }
+    section{ break-inside: avoid; }
+    .role-card{ break-inside: avoid; }
+    .project-card{ break-inside: avoid; }
+    a[href]::after{ content: ""; } /* prevent browsers auto-appending URLs after links */
+  }
+
+  @page{
+    margin: 14mm 12mm;
+  }
+
+  /* ---------- Profile ---------- */
+  .profile p{
+    font-size: 1.02rem;
+    color: var(--silk-dim);
+  }
+  .profile strong{ color: var(--silk); font-weight: 600; }
+
+  /* ---------- Experience ---------- */
+  .role-card{
+    display:grid;
+    grid-template-columns: 148px 1fr;
+    gap: 28px;
+    padding: 22px 0;
+  }
+  .role-card + .role-card{ border-top: 1px dashed var(--panel-line); }
+  .role-card .when{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--silk-faint);
+    line-height: 1.5;
+    padding-top: 3px;
+  }
+  .role-card .when .place{
+    display:block;
+    color: var(--silk-dim);
+    margin-top: 4px;
+    font-size: 11.5px;
+  }
+  .role-card h3{
+    margin: 0 0 12px;
+    font-size: 1.18rem;
+    font-weight: 600;
+    color: var(--silk);
+  }
+  .role-card ul{
+    margin: 0; padding: 0;
+    list-style: none;
+  }
+  .role-card li{
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 10px;
+    color: var(--silk-dim);
+    font-size: 0.97rem;
+    max-width: 66ch;
+  }
+  .role-card li::before{
+    content: '';
+    position: absolute;
+    left: 0; top: 9px;
+    width: 6px; height: 1.5px;
+    background: var(--copper);
+  }
+  @media (max-width: 620px){
+    .role-card{ grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* ---------- Two column grid: education / skills ---------- */
+  .grid2{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+  }
+  @media (max-width: 760px){
+    .grid2{ grid-template-columns: 1fr; gap: 40px; }
+  }
+
+  .edu-item{ margin-bottom: 22px; }
+  .edu-item:last-child{ margin-bottom: 0; }
+  .edu-item h4{
+    margin:0 0 4px;
+    font-size: 1rem;
+    font-weight:600;
+    color: var(--silk);
+  }
+  .edu-item .meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--silk-faint);
+  }
+
+  .skill-group{ margin-bottom: 20px; }
+  .skill-group:last-child{ margin-bottom: 0; }
+  .skill-group .cat{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--silk-faint);
+    margin-bottom: 9px;
+    letter-spacing: 0.03em;
+  }
+  .chips{ display:flex; flex-wrap:wrap; gap: 7px; }
+  .chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--silk-dim);
+    border: 1px solid var(--panel-line);
+    padding: 4px 9px;
+    line-height: 1.4;
+  }
+
+  /* ---------- Project ---------- */
+  .project-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+  @media (max-width: 760px){
+    .project-grid{ grid-template-columns: 1fr; }
+  }
+  .project-card{
+    border: 1px solid var(--panel-line);
+    padding: 26px 28px;
+    background: rgba(198,139,89,0.035);
+    display:flex;
+    flex-direction: column;
+  }
+  .project-card h3{
+    margin: 0 0 6px;
+    font-size: 1.1rem;
+    color: var(--silk);
+  }
+  .project-card .stack{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--copper-bright);
+    margin-bottom: 12px;
+  }
+  .project-card p{
+    margin:0;
+    color: var(--silk-dim);
+    font-size: 0.97rem;
+    flex: 1;
+  }
+  .visit-link{
+    display:inline-flex;
+    align-items:center;
+    gap: 7px;
+    margin-top: 18px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--copper-bright);
+    width: fit-content;
+    padding-bottom: 2px;
+    border-bottom: 1px solid rgba(227,168,116,0.35);
+  }
+  .visit-link svg{ width:12px; height:12px; }
+  .visit-link:hover{
+    text-decoration: none;
+    color: var(--silk);
+    border-bottom-color: var(--silk);
+  }
+
+  /* ---------- Additional ---------- */
+  .add-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  @media (max-width: 700px){
+    .add-grid{ grid-template-columns: 1fr; gap: 26px; }
+  }
+  .add-grid .cat{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--silk-faint);
+    margin-bottom: 8px;
+  }
+  .add-grid div p{
+    margin: 0;
+    color: var(--silk-dim);
+    font-size: 0.95rem;
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    border-top: 1px solid var(--panel-line);
+    padding: 34px 0 48px;
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap: wrap; gap: 14px;
+  }
+  footer .mono{
+    font-size: 11px;
+    color: var(--silk-faint);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .boot .cursor{ animation: none; }
+    html{ scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="pin-marker"><span class="dot"></span>FD · 01</div>
+
+<div class="sheet">
+
+  <section class="hero">
+    <div class="boot mono" id="boot"></div>
+    <h1>Filippo Dall'Asta</h1>
+    <p class="role">Embedded Software Engineer</p>
+    <div class="contact-row">
+      <a class="pin" href="mailto:filippo.dallas@gmail.com">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 7l9 6 9-6"/></svg>
+        filippo.dallas@gmail.com
+      </a>
+      <span class="pin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.9.6 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.8.6a2 2 0 0 1 1.8 2.2Z"/></svg>
+        +39 340 689 7354
+      </span>
+      <span class="pin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        Milan, Italy
+      </span>
+      <a class="pin" href="https://www.linkedin.com/in/filippo-dallasta/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45Z"/></svg>
+        LinkedIn
+      </a>
+    </div>
+  </section>
+
+  <section class="profile">
+    <div class="label-row"><span class="node"></span><h2>profile</h2><span class="trace"></span></div>
+    <div class="measure">
+      <p>Embedded Software Engineer with experience in <strong>Embedded Linux</strong>, <strong>firmware development</strong>, and hardware/software integration. Comfortable across the stack: embedded C, customizing Linux systems with Buildroot, and designing Python services for connected devices. Hands-on with BLE, BlueZ, D-Bus, REST, MQTT, automated testing, and Linux system integration.</p>
+    </div>
+  </section>
+
+  <section class="experience">
+    <div class="label-row"><span class="node"></span><h2>experience</h2><span class="trace"></span></div>
+
+    <div class="role-card">
+      <div class="when">07/2024 — Present<span class="place">Pirelli · Milan</span></div>
+      <div>
+        <h3>Embedded Software Engineer</h3>
+        <ul>
+          <li>Developed embedded firmware in C for connected devices, implementing new features and supporting automated validation and HIL testing.</li>
+          <li>Designed and built a customized Embedded Linux OS with Buildroot, replacing an unsupported legacy environment and adapting the root filesystem, networking, packages, and system services to project requirements.</li>
+          <li>Redesigned and rewrote a device-control service from scratch, replacing a monolithic serial AT-command architecture with a modular Python-based system.</li>
+          <li>Built the service on Flask, Bleak, BlueZ and dbus-fast, translating factory REST commands into BLE operations including scanning, connection, characteristic read/write and device procedures.</li>
+          <li>Implemented MQTT communication using Mosquitto and Paho-MQTT to publish operation results and device status back to factory systems.</li>
+          <li>Integrated Linux service startup, health checks and device communication, improving maintainability and extensibility of the gateway software.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="role-card">
+      <div class="when">07/2023 — 07/2024<span class="place">Cisco Photonics · Milan</span></div>
+      <div>
+        <h3>Jr. Hardware Engineer</h3>
+        <ul>
+          <li>Troubleshot and repaired faulty PCB boards, supporting hardware development and validation.</li>
+          <li>Performed FMEA and electrical measurements to identify design risks and verify compliance with technical specifications.</li>
+          <li>Supported STM microcontroller debugging and hardware/software integration activities.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label-row"><span class="node"></span><h2>education & skills</h2><span class="trace"></span></div>
+    <div class="grid2">
+      <div>
+        <div class="edu-item">
+          <h4>MSc Biomedical Engineering — Electronic Technologies</h4>
+          <div class="meta">Politecnico di Milano · 2020–2023 · 110/110</div>
+        </div>
+        <div class="edu-item">
+          <h4>BSc Biomedical Engineering</h4>
+          <div class="meta">University of Bologna · 2017–2020 · 102/110</div>
+        </div>
+        <div class="edu-item">
+          <h4>Computer Science · Erasmus exchange</h4>
+          <div class="meta">Luleå University of Technology · 2022</div>
+        </div>
+      </div>
+      <div>
+        <div class="skill-group">
+          <div class="cat">programming</div>
+          <div class="chips">
+            <span class="chip">C</span><span class="chip">Python</span><span class="chip">Bash</span><span class="chip">MATLAB</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <div class="cat">embedded / linux</div>
+          <div class="chips">
+            <span class="chip">Embedded Linux</span><span class="chip">Buildroot</span><span class="chip">BLE</span><span class="chip">BlueZ</span><span class="chip">D-Bus</span><span class="chip">STM32</span><span class="chip">Silicon Labs</span><span class="chip">CMake</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <div class="cat">networking / apis</div>
+          <div class="chips">
+            <span class="chip">REST</span><span class="chip">Flask</span><span class="chip">MQTT</span><span class="chip">Mosquitto</span><span class="chip">Paho-MQTT</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <div class="cat">testing / tools</div>
+          <div class="chips">
+            <span class="chip">Git</span><span class="chip">CI/CD</span><span class="chip">HIL Testing</span><span class="chip">FMEA</span><span class="chip">Oscilloscope</span><span class="chip">Ellisys BT Analyzer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label-row"><span class="node"></span><h2>personal projects</h2><span class="trace"></span></div>
+    <div class="project-grid">
+      <div class="project-card">
+        <h3>Personal Homelab</h3>
+        <div class="stack mono">Proxmox VE · Linux VMs · LXC · Networking</div>
+        <p>Built and maintain a virtualized home infrastructure with hands-on experience in network configuration, VPN, DNS, reverse proxy, storage and service deployment.</p>
+      </div>
+      <div class="project-card">
+        <h3>Memorial Erika Reverberi — Website</h3>
+        <div class="stack mono">Vercel · Supabase</div>
+        <p>Designed and built the official website for the Memorial Erika Reverberi sports tournament, deployed on Vercel with Supabase as the database backend.</p>
+        <a class="visit-link" href="https://memorialreverberi.vercel.app/" target="_blank" rel="noopener">
+          Visit site
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 17 17 7M8 7h9v9"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label-row"><span class="node"></span><h2>additional</h2><span class="trace"></span></div>
+    <div class="add-grid">
+      <div>
+        <div class="cat mono">languages</div>
+        <p>Italian, English, French, Spanish</p>
+      </div>
+      <div>
+        <div class="cat mono">volunteering</div>
+        <p>Cofounder & Organizer, Memorial Erika Reverberi — 2017–Present</p>
+      </div>
+      <div>
+        <div class="cat mono">certificate</div>
+        <p>Cambridge English C1 — 2020</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="mono">Milan, Italy — last built 2026</span>
+    <span class="mono">// end of file</span>
+  </footer>
+
+</div>
+
+<script>
+  // Boot-sequence line in the hero, evoking a device init log.
+  (function(){
+    var el = document.getElementById('boot');
+    var line = "$ init --unit=engineer --name=\"F. Dall'Asta\" --status=ready";
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = line;
+      return;
+    }
+    var i = 0;
+    function type(){
+      if (i <= line.length){
+        el.innerHTML = line.slice(0, i) + '<span class="cursor"></span>';
+        i++;
+        setTimeout(type, 18);
+      } else {
+        el.innerHTML = line + '<span class="cursor"></span>';
+      }
+    }
+    type();
+  })();
+</script>
+
+</body>
+</html>
